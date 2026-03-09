@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olist Weekly Analytics Report — {{ report_week }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #2d3748; font-size: 14px; }
+  .wrapper { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);
+            color: white; border-radius: 10px; padding: 28px 36px; margin-bottom: 28px; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.3px; }
+  .header .subtitle { font-size: 13px; opacity: 0.82; margin-top: 6px; }
+  .header .badge { display: inline-block; background: rgba(255,255,255,0.2);
+                   border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 10px; }
+  {% if has_anomalies %}
+  .header .alert-badge { background: #e53e3e; }
+  {% endif %}
+
+  /* KPI Row */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi-card { background: white; border-radius: 8px; padding: 20px 18px;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid #2d6a9f; }
+  .kpi-card.green  { border-left-color: #38a169; }
+  .kpi-card.yellow { border-left-color: #d69e2e; }
+  .kpi-card.red    { border-left-color: #e53e3e; }
+  .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+               color: #718096; font-weight: 600; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: #1a3c5e; line-height: 1; }
+  .kpi-sub   { font-size: 12px; color: #718096; margin-top: 6px; }
+  .kpi-delta { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .kpi-delta.up   { color: #38a169; }
+  .kpi-delta.down { color: #e53e3e; }
+  .kpi-delta.neutral { color: #718096; }
+
+  /* Section */
+  .section { background: white; border-radius: 8px; padding: 22px 24px;
+             box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 22px; }
+  .section h2 { font-size: 15px; font-weight: 700; color: #1a3c5e;
+                margin-bottom: 16px; padding-bottom: 10px;
+                border-bottom: 2px solid #ebf4ff; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #ebf4ff; color: #1a3c5e; font-weight: 700;
+       text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
+       padding: 10px 12px; text-align: left; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7faff; }
+
+  /* Badges */
+  .badge-green  { background: #c6f6d5; color: #276749; border-radius: 12px;
+                  padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-red    { background: #fed7d7; color: #9b2c2c; border-radius: 12px;
+                  padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-yellow { background: #fefcbf; color: #744210; border-radius: 12px;
+                  padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-blue   { background: #bee3f8; color: #2c5282; border-radius: 12px;
+                  padding: 2px 10px; font-size: 11px; font-weight: 600; }
+
+  /* Anomaly alert box */
+  .anomaly-alert { background: #fff5f5; border: 1px solid #fc8181;
+                   border-radius: 8px; padding: 16px 20px; margin-bottom: 22px; }
+  .anomaly-alert h3 { color: #c53030; font-size: 14px; margin-bottom: 10px; }
+  .anomaly-item { padding: 8px 0; border-bottom: 1px solid #fed7d7; font-size: 13px; }
+  .anomaly-item:last-child { border-bottom: none; }
+  .anomaly-label { font-weight: 600; color: #c53030; }
+
+  /* Progress bar */
+  .bar-bg { background: #e2e8f0; border-radius: 4px; height: 8px; width: 100%; }
+  .bar-fill { border-radius: 4px; height: 8px; background: #2d6a9f; }
+  .bar-fill.green { background: #38a169; }
+  .bar-fill.red   { background: #e53e3e; }
+
+  /* Two-col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 11px; color: #a0aec0; padding-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <div class="header">
+    <h1>📦 Olist Retail — Weekly Operations Report</h1>
+    <div class="subtitle">Week of {{ report_week }}  |  Generated {{ generated_at }}  |  Data through {{ data_through }}</div>
+    {% if has_anomalies %}
+    <span class="badge alert-badge">⚠ {{ anomaly_count }} Anomal{{ 'y' if anomaly_count == 1 else 'ies' }} Detected</span>
+    {% else %}
+    <span class="badge">✓ No Anomalies This Week</span>
+    {% endif %}
+  </div>
+
+  <!-- ── ANOMALY ALERT ──────────────────────────────────────── -->
+  {% if has_anomalies %}
+  <div class="anomaly-alert">
+    <h3>⚠ Anomaly Alert — Requires Attention</h3>
+    {% for a in anomalies %}
+    <div class="anomaly-item">
+      <span class="anomaly-label">Week {{ a.week }}</span> —
+      {{ a.confidence }} &nbsp;|&nbsp;
+      Orders: <strong>{{ a.orders }}</strong> &nbsp;|&nbsp;
+      Revenue: <strong>R${{ a.revenue }}</strong> &nbsp;|&nbsp;
+      Impact: <strong>{{ a.impact }}%</strong>
+      <div style="margin-top:4px; color:#718096; font-size:12px;">{{ a.explanation }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── KPI ROW ────────────────────────────────────────────── -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value">{{ kpis.total_orders }}</div>
+      <div class="kpi-delta {{ kpis.orders_delta_dir }}">{{ kpis.orders_delta }} vs prior week</div>
+    </div>
+    <div class="kpi-card {{ 'green' if kpis.revenue_delta_dir == 'up' else 'red' if kpis.revenue_delta_dir == 'down' else '' }}">
+      <div class="kpi-label">Total Revenue (GMV)</div>
+      <div class="kpi-value">R${{ kpis.total_revenue }}</div>
+      <div class="kpi-delta {{ kpis.revenue_delta_dir }}">{{ kpis.revenue_delta }} vs prior week</div>
+    </div>
+    <div class="kpi-card {{ 'green' if kpis.review_avg >= 4.0 else 'yellow' if kpis.review_avg >= 3.0 else 'red' }}">
+      <div class="kpi-label">Avg Review Score</div>
+      <div class="kpi-value">{{ kpis.review_avg }}</div>
+      <div class="kpi-sub">Out of 5.0 &nbsp;|&nbsp; {{ kpis.review_count }} reviews</div>
+    </div>
+    <div class="kpi-card {{ 'red' if kpis.late_pct > 20 else 'yellow' if kpis.late_pct > 10 else 'green' }}">
+      <div class="kpi-label">Late Delivery Rate</div>
+      <div class="kpi-value">{{ kpis.late_pct }}%</div>
+      <div class="kpi-sub">{{ kpis.late_orders }} late orders</div>
+    </div>
+  </div>
+
+  <!-- ── TWO COLUMN ────────────────────────────────────────── -->
+  <div class="two-col">
+
+    <!-- Top States by Revenue -->
+    <div class="section">
+      <h2>🗺 Top States by Revenue</h2>
+      <table>
+        <thead><tr><th>State</th><th>Orders</th><th>Revenue (R$)</th><th>Share</th></tr></thead>
+        <tbody>
+          {% for row in top_states %}
+          <tr>
+            <td><strong>{{ row.state }}</strong></td>
+            <td>{{ row.orders }}</td>
+            <td>{{ row.revenue }}</td>
+            <td>
+              <div class="bar-bg"><div class="bar-fill" style="width:{{ row.share_pct }}%"></div></div>
+              <small>{{ row.share_pct }}%</small>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Payment Mix -->
+    <div class="section">
+      <h2>💳 Payment Method Mix</h2>
+      <table>
+        <thead><tr><th>Payment Type</th><th>Orders</th><th>Volume (R$)</th><th>Avg Installments</th></tr></thead>
+        <tbody>
+          {% for row in payment_mix %}
+          <tr>
+            <td>{{ row.type }}</td>
+            <td>{{ row.orders }}</td>
+            <td>{{ row.volume }}</td>
+            <td>{{ row.avg_inst }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TOP CATEGORIES ─────────────────────────────────────── -->
+  <div class="section">
+    <h2>📦 Top Categories by Revenue</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Category</th><th>Orders</th>
+          <th>Revenue (R$)</th><th>Avg Price</th><th>Freight %</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in top_categories %}
+        <tr>
+          <td><strong>{{ loop.index }}</strong></td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.orders }}</td>
+          <td>{{ row.revenue }}</td>
+          <td>R${{ row.avg_price }}</td>
+          <td>
+            {% if row.freight_pct > 25 %}
+              <span class="badge-red">{{ row.freight_pct }}% ⚠</span>
+            {% elif row.freight_pct > 15 %}
+              <span class="badge-yellow">{{ row.freight_pct }}%</span>
+            {% else %}
+              <span class="badge-green">{{ row.freight_pct }}%</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.revenue_trend == 'up' %}<span class="badge-green">▲ Growing</span>
+            {% elif row.revenue_trend == 'down' %}<span class="badge-red">▼ Declining</span>
+            {% else %}<span class="badge-blue">→ Stable</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── SELLER HEALTH ──────────────────────────────────────── -->
+  <div class="section">
+    <h2>🏪 Seller Health — At-Risk Sellers (Late Delivery > 25%)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Seller ID</th><th>State</th><th>Orders</th>
+          <th>Revenue (R$)</th><th>Avg Review</th><th>Late %</th><th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in at_risk_sellers %}
+        <tr>
+          <td style="font-family:monospace;font-size:11px">{{ row.seller_id[:16] }}…</td>
+          <td>{{ row.state }}</td>
+          <td>{{ row.orders }}</td>
+          <td>{{ row.revenue }}</td>
+          <td>
+            {% if row.review >= 4.0 %}<span class="badge-green">{{ row.review }}</span>
+            {% elif row.review >= 3.0 %}<span class="badge-yellow">{{ row.review }}</span>
+            {% else %}<span class="badge-red">{{ row.review }}</span>{% endif %}
+          </td>
+          <td><span class="badge-red">{{ row.late_pct }}%</span></td>
+          <td>
+            {% if row.late_pct >= 40 %}<span class="badge-red">🔴 HIGH</span>
+            {% else %}<span class="badge-yellow">🟡 MEDIUM</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if at_risk_sellers|length == 0 %}
+        <tr><td colspan="7" style="text-align:center;color:#718096;padding:20px">
+          ✓ No high-risk sellers this period
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── WEEKLY TREND TABLE ─────────────────────────────────── -->
+  <div class="section">
+    <h2>📈 Last 8 Weeks — Revenue Trend</h2>
+    <table>
+      <thead>
+        <tr><th>Week</th><th>Orders</th><th>Revenue (R$)</th><th>Avg Ticket</th><th>Avg Review</th><th>Late %</th><th>vs Prev Week</th></tr>
+      </thead>
+      <tbody>
+        {% for row in weekly_trend %}
+        <tr>
+          <td>{{ row.week }}</td>
+          <td>{{ row.orders }}</td>
+          <td>{{ row.revenue }}</td>
+          <td>R${{ row.avg_ticket }}</td>
+          <td>{{ row.avg_review }}</td>
+          <td>{{ row.late_pct }}%</td>
+          <td>
+            {% if row.wow_pct > 5 %}<span class="badge-green">▲ +{{ row.wow_pct }}%</span>
+            {% elif row.wow_pct < -5 %}<span class="badge-red">▼ {{ row.wow_pct }}%</span>
+            {% else %}<span class="badge-blue">→ {{ row.wow_pct }}%</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <div class="footer">
+    Auto-generated by Olist Analytics Pipeline &nbsp;|&nbsp;
+    Data Source: Brazilian E-Commerce Dataset (Olist, Kaggle) &nbsp;|&nbsp;
+    {{ generated_at }}
+  </div>
+
+</div>
+</body>
+</html>

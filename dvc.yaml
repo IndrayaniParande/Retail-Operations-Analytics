@@ -1,0 +1,125 @@
+# dvc.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# DVC Pipeline — defines each stage, its dependencies, and its outputs.
+# DVC tracks: what changed → what needs to re-run.
+#
+# Commands:
+#   dvc repro              — run all stages (only re-runs changed stages)
+#   dvc repro generate     — run only the generate stage
+#   dvc dag                — visualise the pipeline DAG
+#   dvc status             — check what's out of date
+# ─────────────────────────────────────────────────────────────────────────────
+
+stages:
+
+  # ── Stage 1: Generate synthetic dataset ───────────────────────────────────
+  generate:
+    cmd: python -m src.etl.generate_data
+    deps:
+      - src/etl/generate_data.py
+      - configs/config.yaml
+    outs:
+      - data/raw/olist_customers_dataset.csv
+      - data/raw/olist_orders_dataset.csv
+      - data/raw/olist_order_items_dataset.csv
+      - data/raw/olist_order_payments_dataset.csv
+      - data/raw/olist_order_reviews_dataset.csv
+      - data/raw/olist_products_dataset.csv
+      - data/raw/olist_sellers_dataset.csv
+      - data/raw/geolocation.csv
+      - data/raw/product_category_name_translation.csv
+    # NOTE: When using real Olist CSVs instead of generated ones,
+    # comment out this stage and run: dvc add data/raw/*.csv
+
+  # ── Stage 2: ETL Pipeline ─────────────────────────────────────────────────
+  etl:
+    cmd: python -m src.etl.pipeline
+    deps:
+      - src/etl/extract.py
+      - src/etl/transform.py
+      - src/etl/load.py
+      - src/etl/pipeline.py
+      - src/utils/config_loader.py
+      - src/utils/db.py
+      - configs/config.yaml
+      - data/raw/olist_customers_dataset.csv
+      - data/raw/olist_orders_dataset.csv
+      - data/raw/olist_order_items_dataset.csv
+      - data/raw/olist_order_payments_dataset.csv
+      - data/raw/olist_order_reviews_dataset.csv
+      - data/raw/olist_products_dataset.csv
+      - data/raw/olist_sellers_dataset.csv
+      - data/raw/geolocation.csv
+      - data/raw/product_category_name_translation.csv
+    outs:
+      - database/olist.db
+      - data/processed/fact_orders.csv
+      - data/processed/weekly_agg.csv
+      - data/processed/seller_scorecard.csv
+      - data/processed/orders.csv
+      - data/processed/customers.csv
+      - data/processed/sellers.csv
+      - data/processed/products.csv
+      - data/processed/payments.csv
+      - data/processed/reviews.csv
+
+  # ── Stage 3: Anomaly Detection ────────────────────────────────────────────
+  anomaly:
+    cmd: python -m src.anomaly.detector
+    deps:
+      - src/anomaly/detector.py
+      - src/utils/config_loader.py
+      - src/utils/db.py
+      - configs/config.yaml
+      - database/olist.db
+    outs:
+      - data/processed/anomaly_report.csv
+
+  # ── Stage 4: SQL Queries ──────────────────────────────────────────────────
+  sql:
+    cmd: python -m src.sql.runner
+    deps:
+      - src/sql/runner.py
+      - src/utils/config_loader.py
+      - src/utils/db.py
+      - configs/config.yaml
+      - database/olist.db
+    outs:
+      - data/processed/q1_rolling_revenue.csv
+      - data/processed/q2_yoy_by_state.csv
+      - data/processed/q3_seller_ranking.csv
+      - data/processed/q4_category_pareto.csv
+      - data/processed/q5_cohort_retention.csv
+      - data/processed/q6_freight_margin_risk.csv
+      - data/processed/q7_payment_installments.csv
+      - data/processed/q8_delivery_vs_review.csv
+
+  # ── Stage 5: Report Generation ────────────────────────────────────────────
+  report:
+    cmd: python -m src.reports.builder
+    deps:
+      - src/reports/builder.py
+      - templates/weekly_report.html
+      - src/utils/config_loader.py
+      - src/utils/db.py
+      - configs/config.yaml
+      - database/olist.db
+      - data/processed/anomaly_report.csv
+    outs:
+      - reports/
+    # Reports are HTML files — excluded from git tracking via .gitignore
+    # DVC tracks them as artifacts
+
+metrics:
+  - data/processed/anomaly_report.csv:
+      cache: false
+
+plots:
+  - data/processed/weekly_agg.csv:
+      x: week_start
+      y: total_revenue
+      title: "Weekly Revenue Trend"
+  - data/processed/q1_rolling_revenue.csv:
+      x: order_date
+      y: revenue_rolling_30d
+      title: "30-Day Rolling Revenue"

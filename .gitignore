@@ -1,0 +1,71 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing & coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Data files (tracked by DVC, NOT git) ─────────────────────────────────────
+# Raw data CSVs — large files, versioned by DVC
+data/raw/*.csv
+data/processed/*.csv
+
+# SQLite database — binary, tracked by DVC
+database/*.db
+
+# DVC cache
+.dvc/cache/
+.dvc/tmp/
+
+# ── Generated reports ─────────────────────────────────────────────────────────
+# HTML reports are generated artifacts — not committed
+reports/*.html
+reports/anomaly_summary.txt
+
+# ── Notebooks checkpoints ─────────────────────────────────────────────────────
+notebooks/.ipynb_checkpoints/
+.ipynb_checkpoints/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+secrets.yaml
+*.pem
+*.key

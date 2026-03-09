@@ -1,0 +1,26 @@
+[core]
+    autostage = true
+    analytics = false
+
+# ── Remote storage options (uncomment ONE) ───────────────────────────────────
+
+# Option 1: Local remote (simplest — good for team on shared drive)
+# [remote "local"]
+#     url = /path/to/shared/dvc-storage
+
+# Option 2: AWS S3 (production standard)
+# [remote "s3"]
+#     url = s3://your-bucket-name/olist-dvc
+
+# Option 3: Google Drive (free, good for personal projects)
+# [remote "gdrive"]
+#     url = gdrive://your-folder-id
+
+# Option 4: DagsHub (free + built-in MLflow — best for portfolio)
+# [remote "dagshub"]
+#     url = s3://your-dagshub-repo
+#     endpointurl = https://dagshub.com/your-username/olist-analytics.s3
+
+# To set a remote as default:
+#   dvc remote add -d myremote <url>
+#   dvc remote default myremote

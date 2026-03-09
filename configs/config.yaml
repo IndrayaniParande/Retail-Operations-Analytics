@@ -1,0 +1,83 @@
+project:
+  name: olist-analytics-pipeline
+  version: "1.0.0"
+  description: End-to-End Retail Analytics Pipeline on Brazilian E-Commerce (Olist) Dataset
+
+paths:
+  raw_data:       data/raw
+  processed_data: data/processed
+  database:       database/olist.db
+  reports:        reports
+  templates:      templates
+  logs:           logs
+
+data:
+  files:
+    customers:    olist_customers_dataset.csv
+    orders:       olist_orders_dataset.csv
+    order_items:  olist_order_items_dataset.csv
+    payments:     olist_order_payments_dataset.csv
+    reviews:      olist_order_reviews_dataset.csv
+    products:     olist_products_dataset.csv
+    sellers:      olist_sellers_dataset.csv
+    geolocation:  geolocation.csv
+    categories:   product_category_name_translation.csv
+
+  generator:
+    n_customers:   15000
+    n_sellers:     800
+    n_products:    3200
+    n_orders:      30000
+    random_seed:   42
+    anomaly_weeks:
+      - "2017-11-24"   # Black Friday spike
+      - "2018-05-11"   # Logistics drop
+    date_start: "2016-09-04"
+    date_end:   "2018-10-17"
+
+etl:
+  min_price: 0.01
+  min_sellers_for_scorecard: 5
+  health_score_weights:
+    review:   50
+    ontime:   30
+    volume:   20
+  indexes:
+    - "CREATE INDEX IF NOT EXISTS idx_orders_customer   ON orders(customer_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_orders_status     ON orders(order_status)"
+    - "CREATE INDEX IF NOT EXISTS idx_orders_date       ON orders(order_purchase_timestamp)"
+    - "CREATE INDEX IF NOT EXISTS idx_items_order       ON order_items(order_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_items_seller      ON order_items(seller_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_items_product     ON order_items(product_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_reviews_order     ON reviews(order_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_payments_order    ON payments(order_id)"
+    - "CREATE INDEX IF NOT EXISTS idx_fact_date         ON fact_orders(order_purchase_timestamp)"
+    - "CREATE INDEX IF NOT EXISTS idx_fact_state        ON fact_orders(customer_state)"
+
+anomaly:
+  zscore_threshold:         2.0
+  iqr_multiplier:           1.5
+  isolation_forest:
+    n_estimators:           200
+    contamination:          0.05
+    random_state:           42
+  min_orders_per_week:      3
+  features:
+    - order_count
+    - total_revenue
+    - avg_ticket
+    - avg_review
+    - late_count
+    - avg_freight
+
+reports:
+  demo_weeks:
+    - "2017-11-20"
+    - "2018-01-01"
+    - "2018-05-07"
+    - "2018-09-03"
+  at_risk_late_pct_threshold:  25
+  at_risk_min_orders:          10
+  top_states_count:            6
+  top_categories_count:        8
+  weekly_trend_weeks:          8
