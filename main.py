@@ -1,29 +1,3 @@
-"""
-main.py
-────────
-Single entry point for the entire Olist Analytics Pipeline.
-
-Stages (all or individual):
-    generate  → Synthetic dataset (skip if using real Olist CSVs)
-    etl       → Extract → Transform → Load
-    anomaly   → Z-Score + IQR + Isolation Forest detection
-    sql       → Run all 8 advanced SQL queries
-    report    → Generate Jinja2 HTML weekly reports
-
-Usage:
-    # Full pipeline (no data generation)
-    python main.py
-
-    # Full pipeline + generate synthetic data
-    python main.py --generate
-
-    # Run specific stages only
-    python main.py --stages etl anomaly
-
-    # Generate report for a specific week
-    python main.py --stages report --week 2017-11-20
-"""
-
 import argparse
 import time
 
