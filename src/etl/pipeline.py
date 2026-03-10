@@ -2,7 +2,6 @@ import argparse
 import time
 
 from src.etl.extract import extract
-from olist_project.src.etl.data import run as generate_data
 from src.etl.load import load
 from src.etl.transform import transform
 from src.utils.config_loader import load_config
@@ -12,18 +11,6 @@ log = get_logger(__name__)
 
 
 def run_pipeline(cfg: dict = None, generate: bool = False) -> dict:
-    """
-    Run full ETL pipeline.
-
-    Parameters
-    ----------
-    cfg      : dict  Project config (loaded from yaml if None)
-    generate : bool  If True, regenerate synthetic raw data first
-
-    Returns
-    -------
-    dict of clean DataFrames
-    """
     cfg = cfg or load_config()
     t0  = time.time()
 
