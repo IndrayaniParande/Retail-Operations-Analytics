@@ -61,7 +61,7 @@ olist-analytics-pipeline/
 
 ---
 
-##  Quick Start (5 minutes)
+##  Start on your machine
 
 ```bash
 # 1. Clone
@@ -87,32 +87,7 @@ open reports/weekly_report_2017-11-20.html
 
 ---
 
-## Usage
-
-```bash
-# Full pipeline (ETL → Anomaly → SQL → Reports)
-python main.py
-
-
-# Run specific stages only
-python main.py --stages etl
-python main.py --stages anomaly sql
-python main.py --stages report --week 2017-11-20
-
-# Run individual modules
-python -m src.etl.generate_data
-python -m src.etl.pipeline
-python -m src.anomaly.detector
-python -m src.sql.runner --query q3_seller_ranking
-python -m src.reports.builder --week 2017-11-20
-
-# Run tests
-pytest tests/ -v
-```
-
----
-
-## 🏗 Architecture
+## Architecture
 
 ```
 data/raw/*.csv (9 CSVs)
@@ -182,6 +157,19 @@ data/raw/*.csv (9 CSVs)
 - States AM + PA: freight cost **>22% of order revenue** = structural margin risk
 
 ---
+---
+
+## Weekly Report — Live Preview
+
+> Auto-generated Jinja2 HTML report · Black Friday week 2017-11-20 · Anomaly alerts live
+
+### Above the Fold — KPIs & Anomaly Alerts
+![Weekly Report Preview](assets/report_preview.png)
+
+### Full Report Scroll — Categories, Seller Risk, 8-Week Trend
+![Weekly Report Full](assets/report_full.png)
+
+---
 
 ##  Tech Stack
 
@@ -197,30 +185,6 @@ data/raw/*.csv (9 CSVs)
 | Data versioning | DVC |
 | Testing | pytest |
 | Visualisation | Power BI (see data/processed/*.csv) |
-
----
-
-##  DVC Pipeline
-
-```bash
-# Install DVC (requires network)
-pip install dvc
-
-# Reproduce full pipeline (DVC only reruns changed stages)
-dvc repro
-
-# Check what's out of date
-dvc status
-
-# Visualise pipeline DAG
-dvc dag
-
-# Push data to remote storage
-dvc push
-
-# Pull data on a new machine
-dvc pull
-```
 
 ---
 
