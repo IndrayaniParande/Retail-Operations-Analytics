@@ -165,10 +165,6 @@ data/raw/*.csv (9 CSVs)
 
 ### Above the Fold — KPIs & Anomaly Alerts
 ![Weekly Report Preview](assets/report_preview.png)
-
-### Full Report Scroll — Categories, Seller Risk, 8-Week Trend
-![Weekly Report Full](assets/report_full.png)
-
 ---
 
 ##  Tech Stack
