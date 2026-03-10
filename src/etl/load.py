@@ -7,7 +7,7 @@ from src.utils.logger import get_logger
 
 log = get_logger(__name__)
 
-# Tables to export (order matters for foreign key consistency)
+
 TABLE_ORDER = [
     "customers",
     "sellers",
@@ -29,7 +29,7 @@ def _df_to_sql(df: pd.DataFrame, name: str, conn) -> None:
     out = df.copy()
     for col in out.select_dtypes(include=["datetime64[ns]", "datetimetz"]).columns:
         out[col] = out[col].astype(str)
-    # Convert pandas nullable int types to standard int/float for SQLite
+    
     for col in out.columns:
         if hasattr(out[col], "dtype") and str(out[col].dtype) in ("Int8", "Int32", "Int64"):
             out[col] = out[col].astype("float64")
@@ -54,7 +54,7 @@ def load(clean: dict[str, pd.DataFrame], cfg: dict = None) -> None:
     log.info("STAGE 3 — LOAD")
     log.info("─" * 50)
 
-    # ── SQLite ────────────────────────────────────────────────────────────────
+   
     with get_connection(cfg) as conn:
         log.info(f"  Connected → {cfg['paths']['database']}")
 
@@ -65,7 +65,7 @@ def load(clean: dict[str, pd.DataFrame], cfg: dict = None) -> None:
             _df_to_sql(clean[tname], tname, conn)
             log.info(f"  ✓ {tname:<20} → {len(clean[tname]):>8,} rows")
 
-        # Create indexes
+    
         for idx_sql in indexes:
             try:
                 conn.execute(idx_sql)
@@ -74,7 +74,7 @@ def load(clean: dict[str, pd.DataFrame], cfg: dict = None) -> None:
 
         log.info(f"  ✓ {len(indexes)} indexes applied")
 
-    # ── Processed CSVs ────────────────────────────────────────────────────────
+   
     log.info(f"  Writing CSVs → {proc_dir}")
     for tname in TABLE_ORDER:
         if tname not in clean:
