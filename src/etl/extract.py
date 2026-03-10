@@ -8,17 +8,7 @@ log = get_logger(__name__)
 
 
 def extract(cfg: dict = None) -> dict[str, pd.DataFrame]:
-    """
-    Load all 9 Olist CSV files from data/raw/.
 
-    Parameters
-    ----------
-    cfg : dict  Project config from load_config()
-
-    Returns
-    -------
-    dict mapping logical table name → DataFrame
-    """
     cfg  = cfg or load_config()
     raw_dir   = cfg["paths"]["raw_data"]
     file_map  = cfg["data"]["files"]
